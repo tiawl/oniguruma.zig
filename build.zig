@@ -8,12 +8,16 @@ const Paths = struct
   __tmp_src: [] const u8 = undefined,
   __oniguruma: [] const u8 = undefined,
   __oniguruma_src: [] const u8 = undefined,
+  __oniguruma_src_linux: [] const u8 = undefined,
+  __oniguruma_src_windows: [] const u8 = undefined,
 
   // mandatory getters
   pub fn getTmp (self: @This ()) [] const u8 { return self.__tmp; }
   pub fn getTmpSrc (self: @This ()) [] const u8 { return self.__tmp_src; }
   pub fn getOniguruma (self: @This ()) [] const u8 { return self.__oniguruma; }
   pub fn getOnigurumaSrc (self: @This ()) [] const u8 { return self.__oniguruma_src; }
+  pub fn getOnigurumaSrcLinux (self: @This ()) [] const u8 { return self.__oniguruma_src_linux; }
+  pub fn getOnigurumaSrcWindows (self: @This ()) [] const u8 { return self.__oniguruma_src_windows; }
 
   // mandatory init
   pub fn init (builder: *std.Build) !@This ()
@@ -28,6 +32,10 @@ const Paths = struct
 
     self.__oniguruma_src = try std.fs.path.join (builder.allocator,
       &.{ self.getOniguruma (), "src", });
+    self.__oniguruma_src_linux = try std.fs.path.join (builder.allocator,
+      &.{ self.getOnigurumaSrc (), "linux", });
+    self.__oniguruma_src_windows = try std.fs.path.join (builder.allocator,
+      &.{ self.getOnigurumaSrc (), "windows", });
     self.__tmp_src = try std.fs.path.join (builder.allocator,
       &.{ self.getTmp (), "src", });
 
@@ -52,11 +60,11 @@ fn update (builder: *std.Build, path: *const Paths,
     .{ .argv = &[_][] const u8 { "autoreconf", "-vfi", }, .cwd = path.getTmp (), });
   try toolbox.run (builder,
     .{ .argv = &[_][] const u8 { "./configure", }, .cwd = path.getTmp (), });
-  try toolbox.run (builder,
-    .{ .argv = &[_][] const u8 { "make", "-j8", }, .cwd = path.getTmp (), });
 
   try toolbox.make (path.getOniguruma ());
   try toolbox.make (path.getOnigurumaSrc ());
+  try toolbox.make (path.getOnigurumaSrcLinux ());
+  try toolbox.make (path.getOnigurumaSrcWindows ());
 
   var src_dir = try std.fs.openDirAbsolute (path.getTmpSrc (),
     .{ .iterate = true, });
@@ -66,7 +74,8 @@ fn update (builder: *std.Build, path: *const Paths,
   while (try it.next ()) |*entry|
   {
     const dest = try std.fs.path.join (builder.allocator,
-      &.{ path.getOnigurumaSrc (), entry.name, });
+      &.{ if (std.mem.eql (u8, entry.name, "config.h")) path.getOnigurumaSrcLinux ()
+          else path.getOnigurumaSrc (), entry.name, });
     switch (entry.kind)
     {
       .file => try toolbox.copy (try std.fs.path.join (builder.allocator,
@@ -74,6 +83,18 @@ fn update (builder: *std.Build, path: *const Paths,
       else => {},
     }
   }
+
+  try toolbox.copy (try std.fs.path.join (builder.allocator,
+      &.{ path.getTmpSrc (), "config.h.windows.in", }),
+    try std.fs.path.join (builder.allocator,
+      &.{ path.getTmpSrc (), "config.h.in", }));
+  try toolbox.run (builder,
+    .{ .argv = &[_][] const u8 { "./configure", }, .cwd = path.getTmp (), });
+
+  try toolbox.copy (try std.fs.path.join (builder.allocator,
+      &.{ path.getTmpSrc (), "config.h", }),
+    try std.fs.path.join (builder.allocator,
+      &.{ path.getOnigurumaSrcWindows (), "config.h", }));
 
   try std.fs.deleteTreeAbsolute (path.getTmp ());
   try std.fs.deleteTreeAbsolute (try std.fs.path.join (builder.allocator,
@@ -119,6 +140,10 @@ pub fn build (builder: *std.Build) !void
     "oniguruma",
     try std.fs.path.join (builder.allocator, &.{ "oniguruma", "src", }),
   }) |include| toolbox.addInclude (lib, include);
+
+  toolbox.addInclude (lib,
+    try std.fs.path.join (builder.allocator, &.{ "oniguruma", "src",
+      if (lib.rootModuleTarget ().isMinGW ()) "windows" else "linux", }));
 
   lib.linkLibC ();
 

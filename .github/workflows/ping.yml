@@ -1,0 +1,23 @@
+name: cd ping
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  ping:
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        repo:
+          - libjq
+    runs-on: ubuntu-latest
+    steps:
+    - uses: tiawl/spaceporn-action-cd-ping@v1.1.0
+      with:
+        from: "${{ github.event.repository.name }}"
+        to: "${{ matrix.repo }}.zig"
+        tag: "${{ github.ref_name }}"
+        token: "${{ secrets.PAT }}"
