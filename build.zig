@@ -76,6 +76,8 @@ fn update (builder: *std.Build, path: *const Paths,
   }
 
   try std.fs.deleteTreeAbsolute (path.getTmp ());
+  try std.fs.deleteTreeAbsolute (try std.fs.path.join (builder.allocator,
+      &.{ path.getOnigurumaSrc (), "mktable.c", }));
 
   try toolbox.clean (builder, &.{ "oniguruma", }, &.{});
 }
