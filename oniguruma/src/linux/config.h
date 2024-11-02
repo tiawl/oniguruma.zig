@@ -59,7 +59,7 @@
 #define PACKAGE_NAME "onig"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "onig 6.9.9"
+#define PACKAGE_STRING "onig 6.9.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "onig"
@@ -68,7 +68,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.9.9"
+#define PACKAGE_VERSION "6.9.8"
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
@@ -99,7 +99,7 @@
 /* #undef USE_CRNL_AS_LINE_TERMINATOR */
 
 /* Version number of package */
-#define VERSION "6.9.9"
+#define VERSION "6.9.8"
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */

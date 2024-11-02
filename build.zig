@@ -122,7 +122,7 @@ pub fn build (builder: *std.Build) !void
      .oniguruma = .{
        .name = "kkos/oniguruma",
        .host = toolbox.Repository.Host.github,
-       .ref = toolbox.Repository.Reference.tag,
+       .ref = toolbox.Repository.Reference.commit,
      },
    });
 
